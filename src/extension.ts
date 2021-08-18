@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-07-19 13:17:41
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-07-28 09:57:35
+ * @LastEditTime: 2021-08-18 16:12:09
  */
 // The module 'vscode' contains the VS Code extensibility API
 import * as vscode from "vscode";
@@ -31,7 +31,6 @@ export function activate(context: vscode.ExtensionContext) {
       if (value === undefined || value.trim() === "") {
         vscode.window.showInformationMessage("Please type your words.");
       } else {
-        vscode.window.showInformationMessage(value.trim());
         const panel = vscode.window.createWebviewPanel(
           "codeSearch", // Identifies the type of the webview. Used internally
           "Code Search", // Title of the panel displayed to the user
@@ -72,14 +71,13 @@ function updateWebview(
 ) {
   panel.title = "Code Search for " + queryItem;
   panel.webview.html = getWebviewContent(cssSrc, jsSrc, queryItem, results);
-  console.log(results);
 }
 
 function search(cssSrc: string, jsSrc: string, panel: vscode.WebviewPanel, queryItem: string) {
   var results = "";
   axios({
     method: "get",
-    url: "http://localhost:9200/codesearch/_search",
+    url: "http://localhost:9200/codesearch/_search?size=20",
     headers: {
       "Content-Type": "application/json",
     },
@@ -95,7 +93,7 @@ function search(cssSrc: string, jsSrc: string, panel: vscode.WebviewPanel, query
     }),
   })
     .then(function (response) {
-      console.log(JSON.stringify(response.data.hits.hits));
+      console.log(response.data);
       if (response.data.hits.total.value === 0) {
         results = '<h1>对不起没有检索到"' + queryItem + '"的相关代码</h1>';
       } else {
@@ -103,12 +101,21 @@ function search(cssSrc: string, jsSrc: string, panel: vscode.WebviewPanel, query
           '<h1>"' + queryItem + '"的检索结果共<b>' + response.data.hits.total.value + "</b>条</h1>";
       }
       response.data.hits.hits.forEach(
-        (e: { _source: { name: any; description: any; code: string } }) => {
-          results += `<h1>${e._source.name}</h1>
-							<div>${e._source.description}</div><br/>
-							<pre><code class="language-typescript">${e._source.code
-                .replace(/\r\n/g, "<br />")
-                .replace(/\n/g, "<br />")}</code></pre>`;
+        (e: { _source: { name: string; description: string; code: string; link: string } }) => {
+          results += `<h1 style="color:#2EA9DF">${e._source.name}</h1>
+              <div>${e._source.description}</div><br/>
+              <div>来自于<a href=${e._source.link} >${e._source.link}</a></div><br/>
+              <details>
+                <summary>查看代码</summary>
+                <pre><code class="language-typescript">${e._source.code
+                  .replace(/\r\n/g, "<br />")
+                  .replace(/\n/g, "<br />")}
+                </code></pre>
+              </details>
+              <hr style="border: 0;
+              padding-top: 1px;
+              background: linear-gradient(to right, transparent, #d0d0d5, transparent);"/>
+                `;
         }
       );
 

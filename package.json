@@ -2,6 +2,7 @@
   "name": "codesearch",
   "displayName": "codeSearch",
   "description": "代码检索工具",
+  "publisher": "xinruiZhang",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.58.0"
