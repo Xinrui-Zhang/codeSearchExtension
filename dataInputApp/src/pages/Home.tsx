@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 14:10:58
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-20 16:17:34
+ * @LastEditTime: 2021-08-23 13:40:49
  */
 
 import React, { useState, useEffect } from "react";
@@ -17,22 +17,26 @@ const { Header, Footer, Content } = Layout;
 
 const Home = () => {
   const [projectUrl, setProjectUrl] = useState("");
-  const [fileConfig, setFileConfig] = useState({});
-  const [methodConfig, setMethodConfig] = useState({});
+  const [fileConfig, setFileConfig] = useState<File | string | Blob>();
+  const [methodConfig, setMethodConfig] = useState<File | string | Blob>();
   const [index, setIndex] = useState("");
-  const [indexes, setIndexes] = useState([{ label: "", value: "" }]);
+  const [indexes, setIndexes] = useState<{ label: string; value: string }[]>();
 
   useEffect(() => {
-    getIndexes();
-    setIndexes([{ label: "codesearch", value: "codesearch" }]);
+    let temp = getIndexes();
+    let indexList: { label: string; value: string }[] = [];
+    temp.forEach((val): void => {
+      indexList.push({ label: val, value: val });
+    });
+    setIndexes(indexList);
   }, []);
 
   const uploadData = (data: UploadRequestOption<any>) => {
-    importData(index, data.file);
+    importData(data.file);
   };
 
   const generateData = () => {
-    dataParse(projectUrl, fileConfig, methodConfig);
+    dataParse(projectUrl, index, fileConfig, methodConfig);
   };
 
   return (
@@ -53,34 +57,7 @@ const Home = () => {
           </Col>
         </Row>
         <Row style={{ marginTop: "5%" }}>
-          <Col offset="5" span="4">
-            <Upload
-              accept=".txt"
-              showUploadList={false}
-              customRequest={(data) => {
-                setFileConfig(data.file);
-              }}>
-              <Button>导入完整文件配置</Button>
-            </Upload>
-          </Col>
-          <Col offset="1" span="4">
-            <Upload
-              accept=".txt"
-              showUploadList={false}
-              customRequest={(data) => {
-                setMethodConfig(data.file);
-              }}>
-              <Button>导入工具方法配置</Button>
-            </Upload>
-          </Col>
-          <Col offset="1" span="4">
-            <Button type="primary" onClick={generateData}>
-              生成数据文件
-            </Button>
-          </Col>
-        </Row>
-        <Row style={{ marginTop: "5%" }}>
-          <Col offset="7" span="6">
+          <Col offset="4" span="6">
             <Select
               allowClear
               style={{ width: "100%" }}
@@ -91,8 +68,37 @@ const Home = () => {
               }}></Select>
           </Col>
           <Col offset="1" span="4">
+            <Upload
+              accept=".txt"
+              showUploadList={false}
+              customRequest={(data) => {
+                setFileConfig(data.file);
+              }}>
+              <Button>完整文件配置</Button>
+            </Upload>
+          </Col>
+          <Col offset="1" span="4">
+            <Upload
+              accept=".txt"
+              showUploadList={false}
+              customRequest={(data) => {
+                setMethodConfig(data.file);
+              }}>
+              <Button>工具方法配置</Button>
+            </Upload>
+          </Col>
+        </Row>
+        <Row style={{ marginTop: "5%" }}>
+          <Col offset="7" span="4">
+            <Button type="primary" onClick={generateData}>
+              生成数据文件
+            </Button>
+          </Col>
+          <Col offset="2" span="4">
             <Upload accept=".json" showUploadList={false} customRequest={uploadData}>
-              <Button type="primary">导入数据文件</Button>
+              <Button type="primary" danger>
+                导入数据文件
+              </Button>
             </Upload>
           </Col>
         </Row>

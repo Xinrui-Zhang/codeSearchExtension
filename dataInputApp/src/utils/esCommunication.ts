@@ -4,35 +4,28 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 16:07:21
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-20 17:36:50
+ * @LastEditTime: 2021-08-23 13:33:59
  */
-import axios from "axios";
 
-const getIndexes = () => {
-  // const { net } = require("electron");
-  // const request = net.request("http://localhost:9200/_aliases");
-  // request.on("response", (response) => {
-  //   console.log(`STATUS: ${response.statusCode}`);
-  //   console.log(`HEADERS: ${JSON.stringify(response.headers)}`);
-  //   response.on("data", (chunk) => {
-  //     console.log(`BODY: ${chunk}`);
-  //   });
-  //   response.on("end", () => {
-  //     console.log("No more data in response.");
-  //   });
-  // });
-  // request.end();
-  // axios({
-  //   method: "get",
-  //   url: "http://localhost:9200/_cat/indices?v",
-  // }).then((res) => {
-  //   console.log(res);
-  // });
-  console.log("get indexer");
+import { ipcRenderer } from "electron";
+
+const getIndexes = (): Array<string> => {
+  let temp = JSON.parse(ipcRenderer.sendSync("getIndexes"));
+  let indexes = Object.keys(temp).filter((t: any) => t[0] != ".");
+  return indexes;
 };
 
-const importData = (index: string, data: Object) => {
-  console.log(index, data);
+const importData = (data: File | string | Blob) => {
+  var reader = new FileReader();
+  let fileContent: string | ArrayBuffer;
+  reader.onload = function (e) {
+    fileContent = reader.result;
+    console.log(fileContent);
+    ipcRenderer.send("importDatas", fileContent);
+  };
+  if (typeof data === "object") {
+    console.log(reader.readAsText(data, "utf-8"));
+  }
 };
 
 export { getIndexes, importData };

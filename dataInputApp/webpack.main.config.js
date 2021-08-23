@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 10:53:03
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-20 16:52:38
+ * @LastEditTime: 2021-08-23 08:59:56
  */
 module.exports = {
   /**
@@ -18,5 +18,6 @@ module.exports = {
   },
   resolve: {
     extensions: [".js", ".ts", ".jsx", ".tsx", ".css", ".json"],
+    fallback: { path: false },
   },
 };
