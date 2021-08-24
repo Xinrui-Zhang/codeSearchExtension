@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-07-19 13:17:41
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-24 11:30:14
+ * @LastEditTime: 2021-08-24 16:18:31
  */
 // The module 'vscode' contains the VS Code extensibility API
 import * as vscode from "vscode";
@@ -92,7 +92,7 @@ const search = (
   var results = "";
   axios({
     method: "get",
-    url: "http://localhost:9200/" + index + "/_search?size=20",
+    url: "http://localhost:9200/" + index + "/_search?size=50",
     headers: {
       "Content-Type": "application/json",
     },
@@ -117,9 +117,10 @@ const search = (
       }
       response.data.hits.hits.forEach(
         (e: { _source: { name: string; description: string; code: string; link: string } }) => {
-          results += `<h1 style="color:#2EA9DF">${e._source.name}</h1>
+          results += `<h1 style="color:#2EA9DF">${e._source.name.split("/").pop()}</h1>
               <div>${e._source.description}</div><br/>
               <div>来自于<a href=${e._source.link} >${e._source.link}</a></div><br/>
+              <div>文件路径：${e._source.name}</div><br/>
               <details>
                 <summary>查看代码</summary>
                 <pre><code class="language-typescript">${e._source.code}

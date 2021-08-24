@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 16:07:21
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-23 13:33:59
+ * @LastEditTime: 2021-08-24 15:37:24
  */
 
 import { ipcRenderer } from "electron";
@@ -26,6 +26,13 @@ const importData = (data: File | string | Blob) => {
   if (typeof data === "object") {
     console.log(reader.readAsText(data, "utf-8"));
   }
+  ipcRenderer.on("importFinished", (event, data) => {
+    if (data.errors) {
+      var notification = new Notification("导入失败!");
+    } else {
+      var notification = new Notification("导入成功！");
+    }
+  });
 };
 
 export { getIndexes, importData };

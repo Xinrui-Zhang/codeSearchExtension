@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 16:05:43
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-24 11:01:26
+ * @LastEditTime: 2021-08-24 16:54:40
  */
 import { exec } from "child_process";
 import * as fs from "fs";
@@ -57,14 +57,16 @@ const getProject = (
 
 // 递归遍历文件夹函数
 const travel = (dir: string, callback: any) => {
-  fs.readdirSync(dir).forEach((file: any) => {
-    var pathname = path.join(dir, file);
-    if (fs.statSync(pathname).isDirectory()) {
-      travel(pathname, callback);
-    } else {
-      callback(pathname);
-    }
-  });
+  if (fs.statSync(dir).isDirectory()) {
+    fs.readdirSync(dir).forEach((file: any) => {
+      var pathname = path.join(dir, file);
+      if (fs.statSync(pathname).isDirectory()) {
+        travel(pathname, callback);
+      } else {
+        callback(pathname);
+      }
+    });
+  } else callback(dir);
 };
 
 // 获取所需文件夹下所有文件的路径
@@ -76,14 +78,18 @@ const getFiles = (
   methodFile: string[]
 ) => {
   wholeFile.forEach((val: string) => {
-    travel(process.env.PWD + "/" + projectName + val, (pathname: any) => {
-      getFileContent(pathname, projectUrl, projectName, index);
-    });
+    if (val) {
+      travel(process.env.PWD + "/" + projectName + val, (pathname: any) => {
+        getFileContent(pathname, projectUrl, projectName, index);
+      });
+    }
   });
   methodFile.forEach((val: string) => {
-    travel(process.env.PWD + "/" + projectName + val, (pathname: any) => {
-      getMethodContent(pathname, projectUrl);
-    });
+    if (val) {
+      travel(process.env.PWD + "/" + projectName + val, (pathname: any) => {
+        getMethodContent(pathname, projectUrl, projectName, index);
+      });
+    }
   });
   console.log(datas);
 };
@@ -173,36 +179,43 @@ const getFileContent = (
 };
 
 // 获取工具函数内容并解析写入json文件
-const getMethodContent = (filePath: string, projectUrl: string) => {
-  // let file: { id: string; name: string; description: string | null; link: string; code: string } = {
-  //   id: "",
-  //   name: "",
-  //   description: "",
-  //   link: "",
-  //   code: "",
-  // };
-  // fs.readFile(filePath, "utf-8", (err, data) => {
-  //   if (err) {
-  //     throw err;
-  //   }
-  //   if (data.search(/Version|version/) === -1)
-  //     file.description = data
-  //       .match(/(?<=\@(D|d)escription)[\s\S]*(?=\n\s\*\s\@(A|a))/)?.[0]
-  //       .replace(/:|：/, "")
-  //       .replace(/\n/, " ");
-  //   else
-  //     file.description = data
-  //       .match(/(?<=\@(D|d)escription)[\s\S]*(?=\n\s\*\s\@(V|v))/)?.[0]
-  //       .replace(/:|：/, "")
-  //       .replace(/\n/, " ");
-  //   file.code = data.replace(/\r\n/g, "<br />").replace(/\n/g, "<br />");
-  //   file.link = projectUrl;
-  //   file.id = filePath.split(process.env.PWD + "/")[1];
-  //   file.name = file.id;
-  //   //console.log(file);
-  //   datas.push(file);
-  // });
-  // /\*|\n\s\*(\s|/)
+const getMethodContent = (
+  filePath: string,
+  projectUrl: string,
+  projectName: string,
+  indexNow: string
+) => {
+  let method: { id: string; name: string; description: string | null; link: string; code: string } =
+    {
+      id: "",
+      name: "",
+      description: "",
+      link: "",
+      code: "",
+    };
+  fs.readFile(filePath, "utf-8", (err, data) => {
+    if (err) {
+      throw err;
+    }
+    let re: RegExp = new RegExp("(?<=/\\*\\*)[^/]*(?=\\*)", "g");
+    let functions = data.split(re);
+    let comments = data.match(re);
+    comments.forEach((val, index) => {
+      method.description = val.replace(/\r\n/g, "<br />").replace(/\n/g, "<br />");
+      method.code = functions[index + 1].replace(/\r\n/g, "<br />").replace(/\n/g, "<br />");
+      method.link = projectUrl;
+      method.id = filePath.split(process.env.PWD + "/")[1];
+      method.name = method.id.split(projectName + "/")[1] + "_function";
+      datas.push(method);
+      let tool = { index: { _index: indexNow } };
+      let temp = JSON.stringify(tool);
+      let value = JSON.stringify(method);
+      fs.appendFileSync(projectName + ".json", temp);
+      fs.appendFileSync(projectName + ".json", "\n");
+      fs.appendFileSync(projectName + ".json", value);
+      fs.appendFileSync(projectName + ".json", "\n");
+    });
+  });
 };
 
 export { dataParse };
