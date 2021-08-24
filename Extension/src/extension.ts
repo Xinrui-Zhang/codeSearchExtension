@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-07-19 13:17:41
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-18 16:12:09
+ * @LastEditTime: 2021-08-24 11:30:14
  */
 // The module 'vscode' contains the VS Code extensibility API
 import * as vscode from "vscode";
@@ -27,57 +27,72 @@ export function activate(context: vscode.ExtensionContext) {
       password: false,
       prompt: "Please type the description about the code you want to search:",
     };
-    vscode.window.showInputBox(options).then((value) => {
-      if (value === undefined || value.trim() === "") {
-        vscode.window.showInformationMessage("Please type your words.");
-      } else {
-        const panel = vscode.window.createWebviewPanel(
-          "codeSearch", // Identifies the type of the webview. Used internally
-          "Code Search", // Title of the panel displayed to the user
-          vscode.ViewColumn.One, // Editor column to show the new webview panel in.
-          {
-            enableScripts: true,
-            localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, "src"))],
-          } // Webview options. More on these later.
-        );
-        const queryItem: string = value.trim();
+    let indexes: string[];
+    axios({
+      method: "get",
+      url: "http://localhost:9200/_aliases",
+    }).then((response) => {
+      indexes = Object.keys(response.data).filter((t: any) => t[0] != ".");
+      vscode.window.showQuickPick(indexes).then((index) => {
+        vscode.window.showInputBox(options).then((value) => {
+          if (value === undefined || value.trim() === "") {
+            vscode.window.showInformationMessage("Please type your words.");
+          } else {
+            const panel = vscode.window.createWebviewPanel(
+              "codeSearch", // Identifies the type of the webview. Used internally
+              "Code Search", // Title of the panel displayed to the user
+              vscode.ViewColumn.One, // Editor column to show the new webview panel in.
+              {
+                enableScripts: true,
+                localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, "src"))],
+              } // Webview options. More on these later.
+            );
+            const queryItem: string = value.trim();
 
-        const cssDiskPath = vscode.Uri.file(
-          path.join(context.extensionPath, "src/theme/prism.css")
-        );
-        const cssSrc = cssDiskPath.with({ scheme: "vscode-resource" }).toString();
+            const cssDiskPath = vscode.Uri.file(
+              path.join(context.extensionPath, "src/theme/prism.css")
+            );
+            const cssSrc = cssDiskPath.with({ scheme: "vscode-resource" }).toString();
 
-        const jsDiskPath = vscode.Uri.file(path.join(context.extensionPath, "src/prism.js"));
-        const jsSrc = jsDiskPath.with({ scheme: "vscode-resource" }).toString();
+            const jsDiskPath = vscode.Uri.file(path.join(context.extensionPath, "src/prism.js"));
+            const jsSrc = jsDiskPath.with({ scheme: "vscode-resource" }).toString();
 
-        // Set initial content
-        updateWebview(cssSrc, jsSrc, panel, queryItem, "");
+            // Set initial content
+            updateWebview(cssSrc, jsSrc, panel, queryItem, "");
 
-        // do search
-        search(cssSrc, jsSrc, panel, queryItem);
-      }
+            // do search
+            search(cssSrc, jsSrc, panel, queryItem, index);
+          }
+        });
+      });
     });
   });
 
   context.subscriptions.push(disposable);
 }
 
-function updateWebview(
+const updateWebview = (
   cssSrc: string,
   jsSrc: string,
   panel: vscode.WebviewPanel,
   queryItem: string,
   results: string
-) {
+) => {
   panel.title = "Code Search for " + queryItem;
   panel.webview.html = getWebviewContent(cssSrc, jsSrc, queryItem, results);
-}
+};
 
-function search(cssSrc: string, jsSrc: string, panel: vscode.WebviewPanel, queryItem: string) {
+const search = (
+  cssSrc: string,
+  jsSrc: string,
+  panel: vscode.WebviewPanel,
+  queryItem: string,
+  index: string | undefined
+) => {
   var results = "";
   axios({
     method: "get",
-    url: "http://localhost:9200/codesearch/_search?size=20",
+    url: "http://localhost:9200/" + index + "/_search?size=20",
     headers: {
       "Content-Type": "application/json",
     },
@@ -92,7 +107,7 @@ function search(cssSrc: string, jsSrc: string, panel: vscode.WebviewPanel, query
       },
     }),
   })
-    .then(function (response) {
+    .then((response) => {
       console.log(response.data);
       if (response.data.hits.total.value === 0) {
         results = '<h1>对不起没有检索到"' + queryItem + '"的相关代码</h1>';
@@ -107,9 +122,7 @@ function search(cssSrc: string, jsSrc: string, panel: vscode.WebviewPanel, query
               <div>来自于<a href=${e._source.link} >${e._source.link}</a></div><br/>
               <details>
                 <summary>查看代码</summary>
-                <pre><code class="language-typescript">${e._source.code
-                  .replace(/\r\n/g, "<br />")
-                  .replace(/\n/g, "<br />")}
+                <pre><code class="language-typescript">${e._source.code}
                 </code></pre>
               </details>
               <hr style="border: 0;
@@ -121,12 +134,12 @@ function search(cssSrc: string, jsSrc: string, panel: vscode.WebviewPanel, query
 
       updateWebview(cssSrc, jsSrc, panel, queryItem, results);
     })
-    .catch(function (error) {
+    .catch((error) => {
       updateWebview(cssSrc, jsSrc, panel, queryItem, error);
     });
-}
+};
 
-function getWebviewContent(cssSrc: string, jsSrc: string, query: string, results: string) {
+const getWebviewContent = (cssSrc: string, jsSrc: string, query: string, results: string) => {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -140,7 +153,7 @@ function getWebviewContent(cssSrc: string, jsSrc: string, query: string, results
 		<div>${results}</div>
 </body>
 </html>`;
-}
+};
 
 // this method is called when your extension is deactivated
 export function deactivate() {}

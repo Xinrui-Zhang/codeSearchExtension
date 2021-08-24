@@ -4,11 +4,11 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 14:10:58
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-23 13:40:49
+ * @LastEditTime: 2021-08-24 10:49:31
  */
 
 import React, { useState, useEffect } from "react";
-import { Button, Col, Input, Layout, Row, Select, Upload } from "antd";
+import { Button, Col, Input, Layout, message, Row, Select, Upload } from "antd";
 import { UploadRequestOption } from "rc-upload/lib/interface";
 import { dataParse } from "../utils/dataParse";
 import { getIndexes, importData } from "../utils/esCommunication";
@@ -36,6 +36,19 @@ const Home = () => {
   };
 
   const generateData = () => {
+    if (!projectUrl) {
+      message.error("请输入项目url！");
+      return;
+    } else if (!index) {
+      message.error("请选择数据索引！");
+      return;
+    } else if (!fileConfig) {
+      message.error("请上传完整文件配置文件！");
+      return;
+    } else if (!methodConfig) {
+      message.error("请上传工具方法配置文件！");
+      return;
+    }
     dataParse(projectUrl, index, fileConfig, methodConfig);
   };
 
