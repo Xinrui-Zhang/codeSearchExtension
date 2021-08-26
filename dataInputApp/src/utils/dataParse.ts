@@ -4,13 +4,11 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 16:05:43
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-26 11:29:00
+ * @LastEditTime: 2021-08-26 13:31:36
  */
 import { exec } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
-
-let datas: Array<object> = [];
 
 // 数据解析主函数
 const dataParse = (
@@ -19,8 +17,26 @@ const dataParse = (
   fileConfig: File | string | Blob,
   methodConfig: File | string | Blob
 ) => {
-  console.log(projectUrl, index, fileConfig, methodConfig);
-  getProject(projectUrl, index, fileConfig, methodConfig);
+  let re = /(?<=\/)[^\/]*(?=\.git)/;
+  let projectName = projectUrl.match(re)[0];
+  let cmdStr = "git clone " + projectUrl;
+  exec(cmdStr, function (err, stdout, stderr) {
+    if (err) {
+      console.log(stderr);
+    } else {
+      let wholeFile: string[];
+      let methodFile: string[];
+      getWholeFile(fileConfig).then((result: string[]) => {
+        wholeFile = result;
+        getMethodFile(methodConfig).then((res: string[]) => {
+          methodFile = res;
+          getFiles(projectName, projectUrl, index, wholeFile, methodFile);
+        });
+      });
+      console.log(stdout);
+      exec("code " + process.env.PWD + "/" + projectName + ".json");
+    }
+  });
 };
 
 // 模块使用情况统计
@@ -43,36 +59,7 @@ const modulesUseParse = (
         wholeFile = result;
         getMethodFile(methodConfig).then((res: string[]) => {
           methodFile = res;
-          getModules(projectName, projectUrl, index, wholeFile, methodFile);
-        });
-      });
-      console.log(stdout);
-      exec("code " + process.env.PWD + "/" + projectName + ".json");
-    }
-  });
-};
-
-// 使用git将项目拉到本地
-const getProject = (
-  projectUrl: string,
-  index: string,
-  fileConfig: File | string | Blob,
-  methodConfig: File | string | Blob
-) => {
-  let re = /(?<=\/)[^\/]*(?=\.git)/;
-  let projectName = projectUrl.match(re)[0];
-  let cmdStr = "git clone " + projectUrl;
-  exec(cmdStr, function (err, stdout, stderr) {
-    if (err) {
-      console.log(stderr);
-    } else {
-      let wholeFile: string[];
-      let methodFile: string[];
-      getWholeFile(fileConfig).then((result: string[]) => {
-        wholeFile = result;
-        getMethodFile(methodConfig).then((res: string[]) => {
-          methodFile = res;
-          getFiles(projectName, projectUrl, index, wholeFile, methodFile);
+          getModules(projectName, index, wholeFile, methodFile);
         });
       });
       console.log(stdout);
@@ -155,7 +142,6 @@ const getFiles = (
       });
     }
   });
-  console.log(datas);
 };
 
 // 获取单个文件内容并解析写入json文件
@@ -193,7 +179,6 @@ const getFileContent = (
     file.link = projectUrl;
     file.id = filePath.split(process.env.PWD + "/")[1];
     file.name = file.id;
-    datas.push(file);
     let tool = { index: { _index: indexNow, _id: file.id } };
     let temp = JSON.stringify(tool);
     let value = JSON.stringify(file);
@@ -232,7 +217,6 @@ const getMethodContent = (
       method.link = projectUrl;
       method.id = filePath.split(process.env.PWD + "/")[1];
       method.name = method.id.split(projectName + "/")[1] + "_function";
-      datas.push(method);
       let tool = { index: { _index: indexNow } };
       let temp = JSON.stringify(tool);
       let value = JSON.stringify(method);
@@ -246,7 +230,6 @@ const getMethodContent = (
 
 const getModules = (
   projectName: string,
-  projectUrl: string,
   index: string,
   wholeFile: string[],
   methodFile: string[]
@@ -255,18 +238,13 @@ const getModules = (
   files.forEach((val: string) => {
     if (val) {
       travel(process.env.PWD + "/" + projectName + val, (pathname: any) => {
-        getModuleContent(pathname, projectUrl, projectName, index);
+        getModuleContent(pathname, projectName, index);
       });
     }
   });
 };
 
-const getModuleContent = (
-  filePath: string,
-  projectUrl: string,
-  projectName: string,
-  indexNow: string
-) => {
+const getModuleContent = (filePath: string, projectName: string, indexNow: string) => {
   fs.readFile(filePath, "utf-8", (err, data) => {
     if (err) {
       throw err;
@@ -281,9 +259,7 @@ const getModuleContent = (
       if (sourceTest.test(sources[index])) {
       } else {
         val = val.replace(/{|}|,|\*\sas/g, "");
-        console.log(val);
         const moduleItems = val.split(" ");
-        console.log(moduleItems);
         moduleItems.forEach((va) => {
           if (va) {
             let module: {
