@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 16:05:43
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-24 16:54:40
+ * @LastEditTime: 2021-08-26 11:29:00
  */
 import { exec } from "child_process";
 import * as fs from "fs";
@@ -23,8 +23,8 @@ const dataParse = (
   getProject(projectUrl, index, fileConfig, methodConfig);
 };
 
-// 使用git将项目拉到本地
-const getProject = (
+// 模块使用情况统计
+const modulesUseParse = (
   projectUrl: string,
   index: string,
   fileConfig: File | string | Blob,
@@ -32,7 +32,6 @@ const getProject = (
 ) => {
   let re = /(?<=\/)[^\/]*(?=\.git)/;
   let projectName = projectUrl.match(re)[0];
-  console.log(process.env);
   let cmdStr = "git clone " + projectUrl;
   exec(cmdStr, function (err, stdout, stderr) {
     if (err) {
@@ -42,10 +41,37 @@ const getProject = (
       let methodFile: string[];
       getWholeFile(fileConfig).then((result: string[]) => {
         wholeFile = result;
-        console.log(wholeFile);
         getMethodFile(methodConfig).then((res: string[]) => {
           methodFile = res;
-          console.log(methodFile);
+          getModules(projectName, projectUrl, index, wholeFile, methodFile);
+        });
+      });
+      console.log(stdout);
+      exec("code " + process.env.PWD + "/" + projectName + ".json");
+    }
+  });
+};
+
+// 使用git将项目拉到本地
+const getProject = (
+  projectUrl: string,
+  index: string,
+  fileConfig: File | string | Blob,
+  methodConfig: File | string | Blob
+) => {
+  let re = /(?<=\/)[^\/]*(?=\.git)/;
+  let projectName = projectUrl.match(re)[0];
+  let cmdStr = "git clone " + projectUrl;
+  exec(cmdStr, function (err, stdout, stderr) {
+    if (err) {
+      console.log(stderr);
+    } else {
+      let wholeFile: string[];
+      let methodFile: string[];
+      getWholeFile(fileConfig).then((result: string[]) => {
+        wholeFile = result;
+        getMethodFile(methodConfig).then((res: string[]) => {
+          methodFile = res;
           getFiles(projectName, projectUrl, index, wholeFile, methodFile);
         });
       });
@@ -67,31 +93,6 @@ const travel = (dir: string, callback: any) => {
       }
     });
   } else callback(dir);
-};
-
-// 获取所需文件夹下所有文件的路径
-const getFiles = (
-  projectName: string,
-  projectUrl: string,
-  index: string,
-  wholeFile: string[],
-  methodFile: string[]
-) => {
-  wholeFile.forEach((val: string) => {
-    if (val) {
-      travel(process.env.PWD + "/" + projectName + val, (pathname: any) => {
-        getFileContent(pathname, projectUrl, projectName, index);
-      });
-    }
-  });
-  methodFile.forEach((val: string) => {
-    if (val) {
-      travel(process.env.PWD + "/" + projectName + val, (pathname: any) => {
-        getMethodContent(pathname, projectUrl, projectName, index);
-      });
-    }
-  });
-  console.log(datas);
 };
 
 // 获取所需的全文件类型的文件夹或文件列表
@@ -130,6 +131,31 @@ const getMethodFile = (methodConfig: File | string | Blob) => {
       reader.readAsText(methodConfig, "utf-8");
     }
   });
+};
+
+// 获取所需文件夹下所有文件的路径
+const getFiles = (
+  projectName: string,
+  projectUrl: string,
+  index: string,
+  wholeFile: string[],
+  methodFile: string[]
+) => {
+  wholeFile.forEach((val: string) => {
+    if (val) {
+      travel(process.env.PWD + "/" + projectName + val, (pathname: any) => {
+        getFileContent(pathname, projectUrl, projectName, index);
+      });
+    }
+  });
+  methodFile.forEach((val: string) => {
+    if (val) {
+      travel(process.env.PWD + "/" + projectName + val, (pathname: any) => {
+        getMethodContent(pathname, projectUrl, projectName, index);
+      });
+    }
+  });
+  console.log(datas);
 };
 
 // 获取单个文件内容并解析写入json文件
@@ -218,4 +244,73 @@ const getMethodContent = (
   });
 };
 
-export { dataParse };
+const getModules = (
+  projectName: string,
+  projectUrl: string,
+  index: string,
+  wholeFile: string[],
+  methodFile: string[]
+) => {
+  const files = wholeFile.concat(methodFile);
+  files.forEach((val: string) => {
+    if (val) {
+      travel(process.env.PWD + "/" + projectName + val, (pathname: any) => {
+        getModuleContent(pathname, projectUrl, projectName, index);
+      });
+    }
+  });
+};
+
+const getModuleContent = (
+  filePath: string,
+  projectUrl: string,
+  projectName: string,
+  indexNow: string
+) => {
+  fs.readFile(filePath, "utf-8", (err, data) => {
+    if (err) {
+      throw err;
+    }
+    const moduleRe = /(?<=import)[^\n]*(?=from)/g;
+    const sourceRe = /(?<=from)[^\n]*(?=\n)/g;
+    const modules = data.match(moduleRe);
+    const sources = data.match(sourceRe);
+    const sourceTest = /^\.\//;
+    modules.forEach((val, index) => {
+      sources[index] = sources[index].replace(/'|"|\s|;/g, "");
+      if (sourceTest.test(sources[index])) {
+      } else {
+        val = val.replace(/{|}|,|\*\sas/g, "");
+        console.log(val);
+        const moduleItems = val.split(" ");
+        console.log(moduleItems);
+        moduleItems.forEach((va) => {
+          if (va) {
+            let module: {
+              name: string;
+              source: string;
+              fileName: string;
+              projectName: string;
+            } = {
+              name: va,
+              source: sources[index],
+              fileName: filePath.split(process.env.PWD + "/")[1],
+              projectName: projectName,
+            };
+            let tool = {
+              index: { _index: indexNow, _id: filePath.split(process.env.PWD + "/")[1] + "_" + va },
+            };
+            let temp = JSON.stringify(tool);
+            let value = JSON.stringify(module);
+            fs.appendFileSync(projectName + ".json", temp);
+            fs.appendFileSync(projectName + ".json", "\n");
+            fs.appendFileSync(projectName + ".json", value);
+            fs.appendFileSync(projectName + ".json", "\n");
+          }
+        });
+      }
+    });
+  });
+};
+
+export { dataParse, modulesUseParse };

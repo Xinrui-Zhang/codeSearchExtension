@@ -6,3 +6,11 @@ node_modules
 data
 */.DS_Store
 .DS_Store
+DataInputApp/YST-BASIC-DATA-WEB.json
+DataInputApp/YST-INTEGRATED-WEB.json
+DataInputApp/YST-MAKERTING-WEB.json
+DataInputApp/YST-ORDER-web.json
+DataInputApp/YST-SALES-PERSONNEL-WEB.json
+DataInputApp/YST-SCMM-web.json
+DataInputApp/YST-SFMS-WEB.json
+DataInputApp/YST-TMS-web.json

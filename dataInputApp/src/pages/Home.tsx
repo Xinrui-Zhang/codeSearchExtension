@@ -4,13 +4,13 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 14:10:58
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-24 15:35:12
+ * @LastEditTime: 2021-08-26 11:03:26
  */
 
 import React, { useState, useEffect } from "react";
 import { Button, Col, Input, Layout, message, Row, Select, Upload } from "antd";
 import { UploadRequestOption } from "rc-upload/lib/interface";
-import { dataParse } from "../utils/dataParse";
+import { dataParse, modulesUseParse } from "../utils/dataParse";
 import { getIndexes, importData } from "../utils/esCommunication";
 
 const { Header, Footer, Content } = Layout;
@@ -50,6 +50,23 @@ const Home = () => {
       return;
     }
     dataParse(projectUrl, index, fileConfig, methodConfig);
+  };
+
+  const generateModules = () => {
+    if (!projectUrl) {
+      message.error("请输入项目url！");
+      return;
+    } else if (!index) {
+      message.error("请选择数据索引！");
+      return;
+    } else if (!fileConfig) {
+      message.error("请上传完整文件配置文件！");
+      return;
+    } else if (!methodConfig) {
+      message.error("请上传工具方法配置文件！");
+      return;
+    }
+    modulesUseParse(projectUrl, index, fileConfig, methodConfig);
   };
 
   return (
@@ -102,12 +119,17 @@ const Home = () => {
           </Col>
         </Row>
         <Row style={{ marginTop: "5%" }}>
-          <Col offset="7" span="4">
+          <Col offset="5" span="4">
             <Button type="primary" onClick={generateData}>
               生成数据文件
             </Button>
           </Col>
-          <Col offset="2" span="4">
+          <Col offset="1" span="4">
+            <Button type="primary" onClick={generateModules}>
+              生成模块统计
+            </Button>
+          </Col>
+          <Col offset="1" span="4">
             <Upload accept=".json" showUploadList={false} customRequest={uploadData}>
               <Button type="primary" danger>
                 导入数据文件
