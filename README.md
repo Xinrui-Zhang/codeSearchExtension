@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 13:21:30
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-26 14:58:53
+ * @LastEditTime: 2021-08-27 17:27:30
 -->
 
 # Code Search 服务
@@ -13,6 +13,8 @@
 
 - Extension 文件夹下为代码检索插件的源码
 - DataInputApp 文件夹下为处理、导入检索数据的桌面程序源码
+
+在运行本项目前，需要启动 elastic search 和 kibana 服务，项目中默认 elastic search 端口为 9200
 
 ## /Extension
 
