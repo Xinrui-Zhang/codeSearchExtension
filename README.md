@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 13:21:30
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-27 17:27:30
+ * @LastEditTime: 2021-12-31 10:57:14
 -->
 
 # Code Search 服务
@@ -14,7 +14,33 @@
 - Extension 文件夹下为代码检索插件的源码
 - DataInputApp 文件夹下为处理、导入检索数据的桌面程序源码
 
-在运行本项目前，需要启动 elastic search 和 kibana 服务，项目中默认 elastic search 端口为 9200
+在运行本项目前，需要启动 elastic search 和 kibana 服务，项目中默认 elastic search 端口为 9200，服务启动在本地，如果在服务器上启动，需将项目中的 localhost 改为对应 IP/域名。
+
+- docker 拉取镜像
+
+  ```cmd
+  docker pull elasticsearch:7.0.1
+  docker pull kibana:7.0.1
+  ```
+
+- docker 运行镜像
+  ```cmd
+  docker run --name es01-test -p 9200:9200 -p 9300:9300 -e ES_JAVA_OPTS="-Xms512m -Xmx512m" -e "discovery.type=single-node" -e bootstrap.system_call_filter=false -e bootstrap.memory_lock=false elasticsearch:7.0.1
+  docker run --name kib01-test --net elastic -p 5601:5601 -e "ELASTICSEARCH_HOSTS=http://localhost:9200" kibana:7.0.1
+  ```
+  **注意：要先运行 elastic search，再运行 kibana，且运行 kibana 时要将其与 elasticsearch 运行位置配置匹配。**
+- docker 停止镜像
+
+  ```cmd
+   docker stop es01-test
+   docker stop kib01-test
+  ```
+
+- docker 删除镜像
+  ```cmd
+   docker rm es01-test
+   docker rm kib01-test
+  ```
 
 ## /Extension
 
@@ -23,6 +49,15 @@
 1. npm install / yarn 安装依赖
 2. F5 调试，进入 extension debug 模式
 3. 调出命令搜索框后输入 code search 即可激活本插件
+
+### 打包
+
+1. npm install -g vsce 安装打包工具
+2. vsce package 打包，生成.vsix 文件
+
+### 插件安装
+
+`code --install-extension xxx.vsix(文件路径)`
 
 ### 插件使用
 

@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 16:05:43
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-08-26 13:31:36
+ * @LastEditTime: 2021-08-27 13:57:01
  */
 import { exec } from "child_process";
 import * as fs from "fs";
@@ -253,7 +253,7 @@ const getModuleContent = (filePath: string, projectName: string, indexNow: strin
     const sourceRe = /(?<=from)[^\n]*(?=\n)/g;
     const modules = data.match(moduleRe);
     const sources = data.match(sourceRe);
-    const sourceTest = /^\.\//;
+    const sourceTest = /^\.\/|^@\/api/;
     modules.forEach((val, index) => {
       sources[index] = sources[index].replace(/'|"|\s|;/g, "");
       if (sourceTest.test(sources[index])) {
