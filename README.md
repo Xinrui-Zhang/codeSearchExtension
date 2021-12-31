@@ -4,7 +4,7 @@
  * @Autor: xrzhang03
  * @Date: 2021-08-20 13:21:30
  * @LastEditors: xrzhang03
- * @LastEditTime: 2021-12-31 10:57:14
+ * @LastEditTime: 2021-12-31 11:03:16
 -->
 
 # Code Search 服务
@@ -46,14 +46,14 @@
 
 ### 调试
 
-1. npm install / yarn 安装依赖
+1. `npm install` / `yarn` 安装依赖
 2. F5 调试，进入 extension debug 模式
 3. 调出命令搜索框后输入 code search 即可激活本插件
 
 ### 打包
 
-1. npm install -g vsce 安装打包工具
-2. vsce package 打包，生成.vsix 文件
+1. `npm install -g vsce` 安装打包工具
+2. `vsce package` 打包，生成.vsix 文件
 
 ### 插件安装
 
@@ -70,8 +70,8 @@
 
 ### 运行
 
-1. npm install / yarn 安装依赖
-2. npm run start / yarn start 运行
+1. `npm install` / `yarn` 安装依赖
+2. `npm run start` / `yarn start` 运行
 
 ### 使用
 
